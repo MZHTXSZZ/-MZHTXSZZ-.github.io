@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>主神空间TRPG战役管理系统 - 管理员模式</title>
+    <title>主神空间TRPG战役系统 - 管理员模式 (密码保护)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -37,7 +37,150 @@
             min-height: 100vh;
             overflow-x: hidden;
         }
-        
+
+        /* ========== 密码保护界面样式 ========== */
+        #passwordProtection {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(5, 10, 20, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .password-container {
+            background: var(--panel-color);
+            border: 2px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 3rem;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.4);
+            animation: pulseBorder 3s infinite alternate;
+        }
+
+        @keyframes pulseBorder {
+            from { box-shadow: 0 0 30px rgba(0, 212, 255, 0.4); }
+            to { box-shadow: 0 0 50px rgba(157, 78, 221, 0.6); }
+        }
+
+        .password-logo {
+            font-size: 3.5rem;
+            color: var(--accent-color);
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .password-title {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+        }
+
+        .password-subtitle {
+            color: #a0b0ff;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .password-input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .password-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #c0d0ff;
+        }
+
+        #passwordInput {
+            width: 100%;
+            padding: 1rem;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: white;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+
+        #passwordInput:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .password-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .password-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .password-btn.submit {
+            background: linear-gradient(135deg, var(--accent-color), #0080ff);
+            color: white;
+        }
+
+        .password-btn.submit:hover {
+            background: linear-gradient(135deg, #00a8ff, #0066cc);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .password-btn.cancel {
+            background-color: rgba(255, 55, 95, 0.1);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        .password-btn.cancel:hover {
+            background-color: rgba(255, 55, 95, 0.2);
+        }
+
+        #passwordError {
+            color: var(--danger-color);
+            margin-top: 1rem;
+            min-height: 1.5rem;
+            font-weight: bold;
+            display: none;
+        }
+
+        .password-hint {
+            margin-top: 1.5rem;
+            color: #8090cc;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        /* ========== 主内容区（默认隐藏，验证后显示） ========== */
+        #mainContent {
+            display: none;
+        }
+
         /* 管理员控制面板 */
         .admin-controls {
             background-color: rgba(20, 10, 40, 0.9);
@@ -241,6 +384,7 @@
             transition: all 0.3s ease;
             background-color: rgba(20, 30, 50, 0.7);
             position: relative;
+            cursor: pointer;
         }
         
         .character-card:hover {
@@ -734,6 +878,18 @@
             .edit-form {
                 padding: 1rem;
             }
+            
+            .password-container {
+                padding: 2rem 1.5rem;
+            }
+            
+            .password-title {
+                font-size: 1.7rem;
+            }
+            
+            .password-buttons {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -741,126 +897,331 @@
     <!-- 数据流背景效果 -->
     <div class="data-stream" id="dataStream"></div>
     
-    <!-- 管理员控制面板 -->
-    <div class="admin-controls">
-        <div class="admin-title">
-            <i class="fas fa-user-shield"></i> 管理员控制面板
-        </div>
-        <div class="admin-buttons">
-            <button class="admin-btn edit" id="toggleEditMode">
-                <i class="fas fa-edit"></i> 切换编辑模式
-            </button>
-            <button class="admin-btn" id="addCharacter">
-                <i class="fas fa-user-plus"></i> 添加角色
-            </button>
-            <button class="admin-btn" id="addMission">
-                <i class="fas fa-tasks"></i> 添加任务
-            </button>
-            <button class="admin-btn save" id="saveData">
-                <i class="fas fa-save"></i> 保存数据
-            </button>
-            <button class="admin-btn" id="exportData">
-                <i class="fas fa-download"></i> 导出数据
-            </button>
-            <button class="admin-btn" id="importData">
-                <i class="fas fa-upload"></i> 导入数据
-            </button>
-            <button class="admin-btn cancel" id="resetData">
-                <i class="fas fa-trash-alt"></i> 重置数据
-            </button>
-        </div>
-    </div>
-    
-    <!-- 头部标题 -->
-    <header class="header">
-        <h1 class="main-title">
-            <i class="fas fa-infinity"></i> 主神空间TRPG战役系统
-        </h1>
-        <p class="subtitle">轮回者信息监控面板 · 管理员编辑模式</p>
-        <div class="console" id="console">
-            <div class="console-line">> 系统初始化完成...</div>
-            <div class="console-line">> 管理员模式已激活...</div>
-            <div class="console-line">> 加载本地存储数据...</div>
-            <div class="console-line">> 等待管理员指令...</div>
-        </div>
-    </header>
-    
-    <!-- 主要内容区域 -->
-    <div class="container">
-        <!-- 左侧角色卡区域 -->
-        <section class="characters-section">
-            <div class="panel" id="charactersPanel">
-                <div class="panel-header">
-                    <h2 class="panel-title"><i class="fas fa-users"></i> 轮回者小队</h2>
-                    <span class="status-alive" id="characterCount">4 名活跃</span>
-                </div>
-                
-                <div class="character-cards" id="characterCardsContainer">
-                    <!-- 角色卡将通过JavaScript动态生成 -->
-                </div>
+    <!-- ========== 密码保护界面 (始终显示，直到验证通过) ========== -->
+    <div id="passwordProtection">
+        <div class="password-container">
+            <div class="password-logo">
+                <i class="fas fa-user-shield"></i>
             </div>
             
-            <!-- 队伍资源 -->
-            <div class="panel" id="resourcesPanel">
-                <div class="panel-header">
-                    <h2 class="panel-title"><i class="fas fa-coins"></i> 队伍资源</h2>
-                </div>
-                <div class="resource-grid" id="resourcesGrid">
-                    <!-- 资源项将通过JavaScript动态生成 -->
-                </div>
+            <h1 class="password-title">主神空间管理员验证</h1>
+            <p class="password-subtitle">检测到管理员权限请求，请输入通行密码</p>
+            
+            <div class="password-input-group">
+                <label class="password-label" for="passwordInput">
+                    <i class="fas fa-key"></i> 管理员密码
+                </label>
+                <input type="password" id="passwordInput" placeholder="输入预设的管理员密码" autocomplete="off">
             </div>
-        </section>
+            
+            <div id="passwordError">
+                <i class="fas fa-exclamation-circle"></i> 密码错误，请重试
+            </div>
+            
+            <div class="password-buttons">
+                <button class="password-btn submit" id="submitPassword">
+                    <i class="fas fa-unlock"></i> 验证进入
+                </button>
+                <button class="password-btn cancel" id="playerMode">
+                    <i class="fas fa-eye"></i> 玩家视图
+                </button>
+            </div>
+            
+            <p class="password-hint">
+                提示：如果你是玩家，请点击"玩家视图"或联系主持人获取访问权限。
+            </p>
+        </div>
+    </div>
+
+    <!-- ========== 主内容区 (密码验证通过后显示) ========== -->
+    <div id="mainContent">
+        <!-- 管理员控制面板 -->
+        <div class="admin-controls">
+            <div class="admin-title">
+                <i class="fas fa-user-shield"></i> 管理员控制面板
+            </div>
+            <div class="admin-buttons">
+                <button class="admin-btn edit" id="toggleEditMode">
+                    <i class="fas fa-edit"></i> 切换编辑模式
+                </button>
+                <button class="admin-btn" id="addCharacter">
+                    <i class="fas fa-user-plus"></i> 添加角色
+                </button>
+                <button class="admin-btn" id="addMission">
+                    <i class="fas fa-tasks"></i> 添加任务
+                </button>
+                <button class="admin-btn save" id="saveData">
+                    <i class="fas fa-save"></i> 保存数据
+                </button>
+                <button class="admin-btn" id="exportData">
+                    <i class="fas fa-download"></i> 导出数据
+                </button>
+                <button class="admin-btn" id="importData">
+                    <i class="fas fa-upload"></i> 导入数据
+                </button>
+                <button class="admin-btn cancel" id="resetData">
+                    <i class="fas fa-trash-alt"></i> 重置数据
+                </button>
+            </div>
+        </div>
         
-        <!-- 右侧战役进度区域 -->
-        <section class="campaign-section">
-            <div class="panel" id="campaignPanel">
-                <div class="panel-header">
-                    <h2 class="panel-title"><i class="fas fa-tasks"></i> 战役进度时间线</h2>
-                    <span class="mission-status status-ongoing" id="campaignStatus">进行中</span>
-                </div>
-                
-                <div class="timeline" id="timelineContainer">
-                    <!-- 任务时间线将通过JavaScript动态生成 -->
-                </div>
-                
-                <!-- 主神公告 -->
-                <div class="announcement" id="announcementPanel">
-                    <div class="announcement-header">
-                        <i class="fas fa-exclamation-triangle"></i> 主神公告
+        <!-- 头部标题 -->
+        <header class="header">
+            <h1 class="main-title">
+                <i class="fas fa-infinity"></i> 主神空间TRPG战役系统
+            </h1>
+            <p class="subtitle">轮回者信息监控面板 · 管理员编辑模式</p>
+            <div class="console" id="console">
+                <div class="console-line">> 系统初始化完成...</div>
+                <div class="console-line">> 管理员模式已激活...</div>
+                <div class="console-line">> 加载本地存储数据...</div>
+                <div class="console-line">> 等待管理员指令...</div>
+            </div>
+        </header>
+        
+        <!-- 主要内容区域 -->
+        <div class="container">
+            <!-- 左侧角色卡区域 -->
+            <section class="characters-section">
+                <div class="panel" id="charactersPanel">
+                    <div class="panel-header">
+                        <h2 class="panel-title"><i class="fas fa-users"></i> 轮回者小队</h2>
+                        <span class="status-alive" id="characterCount">4 名活跃</span>
                     </div>
-                    <p id="announcementText">当前世界剩余时间: <strong>14天</strong>。主线任务失败惩罚: 全员抹杀。支线任务"净化该隐赫斯特"已解锁，完成可获得额外奖励。</p>
+                    
+                    <div class="character-cards" id="characterCardsContainer">
+                        <!-- 角色卡将通过JavaScript动态生成 -->
+                    </div>
                 </div>
-            </div>
+                
+                <!-- 队伍资源 -->
+                <div class="panel" id="resourcesPanel">
+                    <div class="panel-header">
+                        <h2 class="panel-title"><i class="fas fa-coins"></i> 队伍资源</h2>
+                    </div>
+                    <div class="resource-grid" id="resourcesGrid">
+                        <!-- 资源项将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </section>
             
-            <!-- 角色详细信息面板 -->
-            <div class="panel" id="characterDetailPanel">
-                <div class="panel-header">
-                    <h2 class="panel-title"><i class="fas fa-id-card"></i> 角色详细信息</h2>
+            <!-- 右侧战役进度区域 -->
+            <section class="campaign-section">
+                <div class="panel" id="campaignPanel">
+                    <div class="panel-header">
+                        <h2 class="panel-title"><i class="fas fa-tasks"></i> 战役进度时间线</h2>
+                        <span class="mission-status status-ongoing" id="campaignStatus">进行中</span>
+                    </div>
+                    
+                    <div class="timeline" id="timelineContainer">
+                        <!-- 任务时间线将通过JavaScript动态生成 -->
+                    </div>
+                    
+                    <!-- 主神公告 -->
+                    <div class="announcement" id="announcementPanel">
+                        <div class="announcement-header">
+                            <i class="fas fa-exclamation-triangle"></i> 主神公告
+                        </div>
+                        <p id="announcementText">当前世界剩余时间: <strong>14天</strong>。主线任务失败惩罚: 全员抹杀。支线任务"净化该隐赫斯特"已解锁，完成可获得额外奖励。</p>
+                    </div>
                 </div>
-                <div id="characterDetailContent">
-                    <p>请点击左侧角色卡查看详细信息，或进入编辑模式修改角色数据。</p>
+                
+                <!-- 角色详细信息面板 -->
+                <div class="panel" id="characterDetailPanel">
+                    <div class="panel-header">
+                        <h2 class="panel-title"><i class="fas fa-id-card"></i> 角色详细信息</h2>
+                    </div>
+                    <div id="characterDetailContent">
+                        <!-- 这里会通过JavaScript动态加载选中的角色信息 -->
+                        <p>请点击左侧角色卡查看详细信息，或进入编辑模式修改角色数据。</p>
+                    </div>
                 </div>
-            </div>
-        </section>
-    </div>
-    
-    <!-- 编辑表单面板 (隐藏) -->
-    <div class="edit-panel" id="editPanel" style="display: none;">
-        <div class="edit-form" id="editForm">
-            <!-- 编辑表单内容将通过JavaScript动态生成 -->
+            </section>
         </div>
+        
+        <!-- 编辑表单面板 (隐藏) -->
+        <div class="edit-panel" id="editPanel" style="display: none;">
+            <div class="edit-form" id="editForm">
+                <!-- 编辑表单内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+        
+        <!-- 文件导入输入 (隐藏) -->
+        <input type="file" id="fileImport" accept=".json" style="display: none;">
+        
+        <!-- 页脚 -->
+        <footer class="footer">
+            <p>主神空间TRPG战役管理系统 v2.5 | 管理员编辑模式</p>
+            <p>警告: 所有更改将自动保存到本地存储 | 管理员权限: 完全控制</p>
+        </footer>
     </div>
-    
-    <!-- 文件导入输入 (隐藏) -->
-    <input type="file" id="fileImport" accept=".json" style="display: none;">
-    
-    <!-- 页脚 -->
-    <footer class="footer">
-        <p>主神空间TRPG战役管理系统 v2.5 | 管理员编辑模式</p>
-        <p>警告: 所有更改将自动保存到本地存储 | 管理员权限: 完全控制</p>
-    </footer>
 
     <script>
+        // ========== 密码验证核心逻辑 ==========
+        // 管理员密码已设置为: 147258369H
+        const ADMIN_PASSWORD = "147258369H";
+        
+        // 获取DOM元素
+        const passwordProtection = document.getElementById('passwordProtection');
+        const mainContent = document.getElementById('mainContent');
+        const passwordInput = document.getElementById('passwordInput');
+        const submitBtn = document.getElementById('submitPassword');
+        const playerModeBtn = document.getElementById('playerMode');
+        const passwordError = document.getElementById('passwordError');
+        
+        // 检查是否已经登录（24小时内有效）
+        function checkPreviousLogin() {
+            const loginTime = localStorage.getItem('adminLoginTime');
+            if (loginTime) {
+                const now = new Date().getTime();
+                // 24小时有效期
+                if (now - parseInt(loginTime) < 86400000) {
+                    // 验证通过，显示主内容
+                    passwordProtection.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    addConsoleMessage("> 管理员会话恢复成功");
+                    return true;
+                } else {
+                    // 登录已过期，清除记录
+                    localStorage.removeItem('adminLoginTime');
+                }
+            }
+            return false;
+        }
+        
+        // 初始化：检查之前是否已登录
+        document.addEventListener('DOMContentLoaded', function() {
+            // 首次加载时检查是否已登录
+            if (!checkPreviousLogin()) {
+                // 未登录，显示密码界面
+                passwordProtection.style.display = 'flex';
+                mainContent.style.display = 'none';
+                passwordInput.focus();
+                
+                // 添加控制台初始化消息
+                setTimeout(() => {
+                    addConsoleMessage("> 系统加载完成，等待管理员验证...");
+                }, 500);
+            } else {
+                // 已登录，初始化主控制台
+                setTimeout(() => {
+                    addConsoleMessage("> 欢迎回来，管理员");
+                    addConsoleMessage("> 所有编辑功能已就绪");
+                }, 500);
+            }
+            
+            // 绑定提交按钮事件
+            submitBtn.addEventListener('click', verifyPassword);
+            
+            // 绑定回车键提交
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    verifyPassword();
+                }
+            });
+            
+            // 绑定玩家模式按钮
+            playerModeBtn.addEventListener('click', function() {
+                if (confirm("您正在请求玩家视图。是否要访问只读的玩家页面？")) {
+                    // 重定向到玩家页面（如果存在）
+                    window.location.href = "index.html"; 
+                }
+            });
+            
+            // 初始化主界面功能（如果已登录）
+            if (mainContent.style.display === 'block') {
+                initMainInterface();
+            }
+        });
+        
+        // 验证密码函数
+        function verifyPassword() {
+            const inputPassword = passwordInput.value.trim();
+            
+            if (inputPassword === ADMIN_PASSWORD) {
+                // 密码正确
+                passwordError.style.display = 'none';
+                
+                // 保存登录时间戳
+                localStorage.setItem('adminLoginTime', new Date().getTime().toString());
+                
+                // 显示成功动画
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> 验证成功';
+                submitBtn.style.background = 'linear-gradient(135deg, #00ff88, #00cc66)';
+                
+                // 短暂延迟后切换界面
+                setTimeout(() => {
+                    passwordProtection.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    
+                    // 添加控制台消息
+                    addConsoleMessage("> 管理员身份验证通过");
+                    addConsoleMessage("> 解锁所有管理功能");
+                    addConsoleMessage("> 系统时间: " + new Date().toLocaleString('zh-CN'));
+                    
+                    // 初始化主界面
+                    initMainInterface();
+                    
+                }, 800);
+                
+            } else {
+                // 密码错误
+                passwordError.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // 添加抖动动画
+                passwordInput.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    passwordInput.style.animation = '';
+                }, 500);
+                
+                // 记录失败尝试
+                addConsoleMessage("> 警告: 检测到一次错误的密码尝试");
+            }
+        }
+        
+        // 初始化主界面功能
+        function initMainInterface() {
+            // 创建数据流背景效果
+            createDataStream();
+            
+            // 加载数据并渲染界面
+            renderAll();
+            
+            // 绑定主界面按钮事件
+            bindMainInterfaceEvents();
+            
+            // 添加控制台欢迎消息
+            addConsoleMessage("> 主神空间TRPG管理系统已完全启动");
+            addConsoleMessage("> 管理员权限确认: 完全访问");
+        }
+        
+        // 简单的抖动动画CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // ========== 控制台消息函数 ==========
+        function addConsoleMessage(message) {
+            const consoleElement = document.getElementById('console');
+            if (consoleElement) {
+                const newLine = document.createElement('div');
+                newLine.className = 'console-line';
+                newLine.textContent = message;
+                consoleElement.appendChild(newLine);
+                consoleElement.scrollTop = consoleElement.scrollHeight;
+            }
+        }
+        
+        // ========== 以下是你原有的管理员功能代码 ==========
+        
         // 全局变量
         let isEditMode = false;
         let editingItem = null;
@@ -1014,153 +1375,6 @@
             }
         };
         
-        // 从本地存储加载数据
-        function loadData() {
-            const savedData = localStorage.getItem('trpgCampaignData');
-            if (savedData) {
-                try {
-                    return JSON.parse(savedData);
-                } catch (e) {
-                    console.error("解析保存数据失败:", e);
-                    return defaultData;
-                }
-            } else {
-                return defaultData;
-            }
-        }
-        
-        // 保存数据到本地存储
-        function saveData() {
-            const data = {
-                characters: characters,
-                missions: missions,
-                resources: resources,
-                announcement: announcement,
-                settings: {
-                    adminMode: isEditMode,
-                    lastSaved: new Date().toISOString()
-                }
-            };
-            
-            localStorage.setItem('trpgCampaignData', JSON.stringify(data));
-            addConsoleMessage("> 数据已保存到本地存储");
-            
-            // 显示保存成功提示
-            showNotification("数据保存成功", "success");
-        }
-        
-        // 导出数据
-        function exportData() {
-            const data = {
-                characters: characters,
-                missions: missions,
-                resources: resources,
-                announcement: announcement,
-                settings: {
-                    adminMode: isEditMode,
-                    lastSaved: new Date().toISOString(),
-                    exportDate: new Date().toISOString()
-                }
-            };
-            
-            const dataStr = JSON.stringify(data, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
-            const exportFileDefaultName = `主神空间战役数据_${new Date().toISOString().slice(0,10)}.json`;
-            
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-            
-            addConsoleMessage("> 数据已导出为JSON文件");
-            showNotification("数据导出成功", "success");
-        }
-        
-        // 导入数据
-        function importData() {
-            document.getElementById('fileImport').click();
-        }
-        
-        // 重置数据
-        function resetData() {
-            if (confirm("确定要重置所有数据吗？此操作不可撤销！")) {
-                localStorage.removeItem('trpgCampaignData');
-                Object.assign(characters, [...defaultData.characters]);
-                Object.assign(missions, [...defaultData.missions]);
-                Object.assign(resources, [...defaultData.resources]);
-                announcement = defaultData.announcement;
-                
-                renderAll();
-                addConsoleMessage("> 数据已重置为默认值");
-                showNotification("数据已重置", "warning");
-            }
-        }
-        
-        // 显示通知
-        function showNotification(message, type = "info") {
-            // 创建通知元素
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 100px;
-                right: 20px;
-                padding: 1rem 1.5rem;
-                border-radius: 6px;
-                color: white;
-                font-weight: bold;
-                z-index: 3000;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-                animation: slideIn 0.3s ease;
-                max-width: 300px;
-            `;
-            
-            // 根据类型设置样式
-            if (type === "success") {
-                notification.style.backgroundColor = "rgba(0, 255, 136, 0.9)";
-                notification.style.borderLeft = "4px solid #00ff88";
-            } else if (type === "error") {
-                notification.style.backgroundColor = "rgba(255, 55, 95, 0.9)";
-                notification.style.borderLeft = "4px solid #ff375f";
-            } else if (type === "warning") {
-                notification.style.backgroundColor = "rgba(255, 165, 0, 0.9)";
-                notification.style.borderLeft = "4px solid #ffa500";
-            } else {
-                notification.style.backgroundColor = "rgba(0, 212, 255, 0.9)";
-                notification.style.borderLeft = "4px solid #00d4ff";
-            }
-            
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            // 3秒后移除通知
-            setTimeout(() => {
-                notification.style.animation = "slideOut 0.3s ease";
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }, 3000);
-            
-            // 添加CSS动画
-            if (!document.querySelector('#notification-styles')) {
-                const style = document.createElement('style');
-                style.id = 'notification-styles';
-                style.textContent = `
-                    @keyframes slideIn {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    @keyframes slideOut {
-                        from { transform: translateX(0); opacity: 1; }
-                        to { transform: translateX(100%); opacity: 0; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        }
-        
         // 数据变量
         let characters = [];
         let missions = [];
@@ -1190,6 +1404,94 @@
                 stream.style.height = `${height}px`;
                 
                 streamContainer.appendChild(stream);
+            }
+        }
+        
+        // 从本地存储加载数据
+        function loadData() {
+            const savedData = localStorage.getItem('trpgCampaignData');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    
+                    // 显示最后更新时间
+                    if (data.settings && data.settings.lastSaved) {
+                        // 更新时间显示在控制台
+                        addConsoleMessage("> 数据最后保存: " + new Date(data.settings.lastSaved).toLocaleString('zh-CN'));
+                    }
+                    
+                    return data;
+                } catch (e) {
+                    console.error("解析保存数据失败:", e);
+                    addConsoleMessage("> 警告: 本地数据损坏，使用默认数据");
+                    return defaultData;
+                }
+            } else {
+                addConsoleMessage("> 未找到本地数据，使用默认数据");
+                return defaultData;
+            }
+        }
+        
+        // 保存数据到本地存储
+        function saveData() {
+            const data = {
+                characters: characters,
+                missions: missions,
+                resources: resources,
+                announcement: announcement,
+                settings: {
+                    adminMode: isEditMode,
+                    lastSaved: new Date().toISOString()
+                }
+            };
+            
+            localStorage.setItem('trpgCampaignData', JSON.stringify(data));
+            addConsoleMessage("> 数据已保存到本地存储");
+        }
+        
+        // 导出数据
+        function exportData() {
+            const data = {
+                characters: characters,
+                missions: missions,
+                resources: resources,
+                announcement: announcement,
+                settings: {
+                    adminMode: isEditMode,
+                    lastSaved: new Date().toISOString(),
+                    exportDate: new Date().toISOString()
+                }
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `主神空间战役数据_${new Date().toISOString().slice(0,10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            addConsoleMessage("> 数据已导出为JSON文件");
+        }
+        
+        // 导入数据
+        function importData() {
+            document.getElementById('fileImport').click();
+        }
+        
+        // 重置数据
+        function resetData() {
+            if (confirm("确定要重置所有数据吗？此操作不可撤销！")) {
+                localStorage.removeItem('trpgCampaignData');
+                characters = [...defaultData.characters];
+                missions = [...defaultData.missions];
+                resources = [...defaultData.resources];
+                announcement = defaultData.announcement;
+                
+                renderAll();
+                addConsoleMessage("> 数据已重置为默认值");
             }
         }
         
@@ -1368,6 +1670,13 @@
         
         // 渲染所有内容
         function renderAll() {
+            const data = loadData();
+            
+            characters = data.characters || defaultData.characters;
+            missions = data.missions || defaultData.missions;
+            resources = data.resources || defaultData.resources;
+            announcement = data.announcement || defaultData.announcement;
+            
             renderCharacterCards();
             renderCampaignTimeline();
             renderResources();
@@ -1377,6 +1686,8 @@
             if (characters.length > 0) {
                 selectCharacter(0);
             }
+            
+            addConsoleMessage(`> 已加载 ${characters.length} 个角色，${missions.length} 个任务`);
         }
         
         // 选择角色并显示详细信息
@@ -1405,9 +1716,7 @@
                     </div>
                     <div class="stat-item">
                         <span>状态:</span>
-                        <span class="stat-value status-${character.status}" style="display: inline-block; padding: 0.2rem 0.5rem;">
-                            ${character.status === 'alive' ? '存活' : character.status === 'injured' ? '受伤' : '死亡'}
-                        </span>
+                        <span class="stat-value ${character.status === 'alive' ? 'status-alive' : 'status-injured'}" style="display: inline-block; padding: 0.2rem 0.5rem;">${character.status === 'alive' ? '存活' : '受伤'}</span>
                     </div>
                     <div class="stat-item">
                         <span>生命值:</span>
@@ -1477,9 +1786,6 @@
                 
                 <h4 style="color: var(--accent-color); margin-bottom: 0.5rem;">背景故事</h4>
                 <p style="line-height: 1.6; color: #b0c0ff;">${character.background}</p>
-                
-                <h4 style="color: var(--accent-color); margin-bottom: 0.5rem; margin-top: 1rem;">当前状态备注</h4>
-                <p style="line-height: 1.6; color: #b0c0ff;">${character.currentCondition}</p>
             `;
             
             if (character.notes) {
@@ -1506,12 +1812,10 @@
                 toggleBtn.innerHTML = '<i class="fas fa-times"></i> 退出编辑模式';
                 toggleBtn.classList.add('edit');
                 addConsoleMessage("> 编辑模式已激活");
-                showNotification("编辑模式已激活", "success");
             } else {
                 toggleBtn.innerHTML = '<i class="fas fa-edit"></i> 切换编辑模式';
                 toggleBtn.classList.remove('edit');
                 addConsoleMessage("> 编辑模式已关闭");
-                showNotification("编辑模式已关闭", "info");
                 
                 // 如果正在编辑，取消编辑
                 if (editingItem) {
@@ -1895,7 +2199,6 @@
                             renderAll();
                             saveData();
                             addConsoleMessage(`> 已删除角色`);
-                            showNotification("角色已删除", "warning");
                         }
                     });
                 }
@@ -1910,7 +2213,6 @@
                         renderAll();
                         saveData();
                         addConsoleMessage(`> 已删除任务`);
-                        showNotification("任务已删除", "warning");
                     }
                 });
             }
@@ -1924,7 +2226,6 @@
                         renderAll();
                         saveData();
                         addConsoleMessage(`> 已删除资源`);
-                        showNotification("资源已删除", "warning");
                     }
                 });
             }
@@ -1977,12 +2278,10 @@
                     // 更新现有角色
                     characters[editingItemIndex] = characterData;
                     addConsoleMessage(`> 已更新角色: ${characterData.name}`);
-                    showNotification("角色已更新", "success");
                 } else {
                     // 添加新角色
                     characters.push(characterData);
                     addConsoleMessage(`> 已添加新角色: ${characterData.name}`);
-                    showNotification("新角色已添加", "success");
                 }
             } else if (editingItemType === 'mission') {
                 const missionData = {
@@ -1998,12 +2297,10 @@
                     // 更新现有任务
                     missions[editingItemIndex] = missionData;
                     addConsoleMessage(`> 已更新任务: ${missionData.name}`);
-                    showNotification("任务已更新", "success");
                 } else {
                     // 添加新任务
                     missions.push(missionData);
                     addConsoleMessage(`> 已添加新任务: ${missionData.name}`);
-                    showNotification("新任务已添加", "success");
                 }
             } else if (editingItemType === 'resource') {
                 const resourceData = {
@@ -2016,17 +2313,14 @@
                     // 更新现有资源
                     resources[editingItemIndex] = resourceData;
                     addConsoleMessage(`> 已更新资源: ${resourceData.name}`);
-                    showNotification("资源已更新", "success");
                 } else {
                     // 添加新资源
                     resources.push(resourceData);
                     addConsoleMessage(`> 已添加新资源: ${resourceData.name}`);
-                    showNotification("新资源已添加", "success");
                 }
             } else if (editingItemType === 'announcement') {
                 announcement = document.getElementById('editAnnouncement').value;
                 addConsoleMessage(`> 已更新主神公告`);
-                showNotification("公告已更新", "success");
             }
             
             // 重新渲染并保存数据
@@ -2050,50 +2344,22 @@
             });
         }
         
-        // 添加控制台消息
-        function addConsoleMessage(message) {
-            const consoleElement = document.getElementById('console');
-            const newLine = document.createElement('div');
-            newLine.className = 'console-line';
-            newLine.textContent = message;
-            consoleElement.appendChild(newLine);
-            
-            // 滚动到底部
-            consoleElement.scrollTop = consoleElement.scrollHeight;
-        }
-        
-        // 初始化页面
-        document.addEventListener('DOMContentLoaded', function() {
-            // 加载数据
-            const loadedData = loadData();
-            characters = loadedData.characters || defaultData.characters;
-            missions = loadedData.missions || defaultData.missions;
-            resources = loadedData.resources || defaultData.resources;
-            announcement = loadedData.announcement || defaultData.announcement;
-            isEditMode = loadedData.settings?.adminMode || false;
-            
-            createDataStream();
-            renderAll();
-            
-            // 如果之前是编辑模式，恢复编辑模式
-            if (isEditMode) {
-                toggleEditMode();
-            }
-            
+        // 绑定主界面事件
+        function bindMainInterfaceEvents() {
             // 绑定按钮事件
             document.getElementById('toggleEditMode').addEventListener('click', toggleEditMode);
             document.getElementById('addCharacter').addEventListener('click', () => {
                 if (isEditMode) {
                     openEditForm('character');
                 } else {
-                    showNotification("请先进入编辑模式", "warning");
+                    alert("请先进入编辑模式");
                 }
             });
             document.getElementById('addMission').addEventListener('click', () => {
                 if (isEditMode) {
                     openEditForm('mission');
                 } else {
-                    showNotification("请先进入编辑模式", "warning");
+                    alert("请先进入编辑模式");
                 }
             });
             document.getElementById('saveData').addEventListener('click', saveData);
@@ -2120,11 +2386,10 @@
                             renderAll();
                             saveData();
                             addConsoleMessage("> 数据导入成功");
-                            showNotification("数据导入成功", "success");
                         }
                     } catch (error) {
                         console.error("导入数据失败:", error);
-                        showNotification("导入失败: 文件格式不正确", "error");
+                        alert("导入失败: 文件格式不正确");
                     }
                     
                     // 重置文件输入
@@ -2138,7 +2403,7 @@
                 if (e.target.closest('.edit-btn')) {
                     const btn = e.target.closest('.edit-btn');
                     if (!isEditMode) {
-                        showNotification("请先进入编辑模式", "warning");
+                        alert("请先进入编辑模式");
                         return;
                     }
                     
@@ -2152,17 +2417,18 @@
                     }
                 }
             });
-            
-            // 添加控制台消息
-            addConsoleMessage("> 系统初始化完成");
-            addConsoleMessage(`> 加载了 ${characters.length} 个角色，${missions.length} 个任务`);
-            addConsoleMessage("> 等待管理员指令...");
-            
-            // 模拟实时更新
-            setTimeout(() => {
-                addConsoleMessage("> 系统自检完成，所有功能正常");
-            }, 2000);
-        });
+        }
+        
+        // ========== 安全增强：防止绕过 ==========
+        // 定期检查登录状态（每5分钟）
+        setInterval(() => {
+            if (!localStorage.getItem('adminLoginTime') && mainContent.style.display === 'block') {
+                // 如果登录状态丢失但主内容却显示着，强制退出
+                localStorage.removeItem('adminLoginTime');
+                alert("会话已过期，请重新验证");
+                window.location.reload();
+            }
+        }, 300000); // 5分钟 = 300000毫秒
     </script>
 </body>
 </html>
